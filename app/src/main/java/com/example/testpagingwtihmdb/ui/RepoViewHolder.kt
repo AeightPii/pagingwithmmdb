@@ -84,7 +84,7 @@ class RepoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         description.text = repo.originalTitle
         descriptionVisibility = View.VISIBLE
         description.visibility = descriptionVisibility
-
+//this is new git test
 
 
         // if the language is missing, hide the label and the value
