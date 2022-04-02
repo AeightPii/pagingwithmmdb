@@ -81,7 +81,7 @@ class RepoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
         // if the description is missing, hide the TextView
         var descriptionVisibility = View.GONE
-        description.text = repo.originalTitle
+        description.text = repo.voteCount.toString()
         descriptionVisibility = View.VISIBLE
         description.visibility = descriptionVisibility
 //this is new git test
