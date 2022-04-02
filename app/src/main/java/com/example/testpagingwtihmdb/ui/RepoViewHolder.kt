@@ -85,8 +85,7 @@ class RepoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         descriptionVisibility = View.VISIBLE
         description.visibility = descriptionVisibility
 
-//        stars.text = repo.stars.toString()
-//        forks.text = repo.forks.toString()
+
 
         // if the language is missing, hide the label and the value
         var languageVisibility = View.GONE
