@@ -43,7 +43,7 @@ class RepoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
     private val stars: TextView = view.findViewById(R.id.repo_stars)
     private val language: TextView = view.findViewById(R.id.repo_language)
     private val forks: TextView = view.findViewById(R.id.repo_forks)
-    private val mvImage: ImageView = view.findViewById(R.id.mvImage)
+//    private val mvImage: ImageView = view.findViewById(R.id.mvImage)
 
     private var repo: Result? = null
 
@@ -72,17 +72,19 @@ class RepoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
     private fun showRepoData(repo: Result) {
         this.repo = repo
-        name.text = repo.title
+        name.text = repo.name
 
-        Picasso.get()
-            .load("https://image.tmdb.org/t/p/w200${repo.posterPath}")
-            .placeholder(R.drawable.ic_launcher_foreground)
-            .into(mvImage)
+//        Picasso.get()
+//            .load("https://image.tmdb.org/t/p/w200${repo.posterPath}")
+//            .placeholder(R.drawable.ic_launcher_foreground)
+//            .into(mvImage)
 
         // if the description is missing, hide the TextView
         var descriptionVisibility = View.GONE
-        description.text = repo.voteCount.toString()
-        descriptionVisibility = View.VISIBLE
+        if (repo.originalName != null) {
+            description.text = repo.originalName
+            descriptionVisibility = View.VISIBLE
+        }
         description.visibility = descriptionVisibility
 //this is new git test
 

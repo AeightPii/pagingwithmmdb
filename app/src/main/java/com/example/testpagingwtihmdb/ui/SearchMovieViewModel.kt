@@ -16,6 +16,7 @@
 
 package com.example.testpagingwtihmdb.ui
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,18 +26,7 @@ import androidx.paging.insertSeparators
 import androidx.paging.map
 import com.example.testpagingwtihmdb.data.MovieRepository
 import com.example.testpagingwtihmdb.model.Result
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
@@ -46,7 +36,8 @@ import kotlinx.coroutines.launch
 class SearchMovieViewModelViewModel(
     private val repository: MovieRepository,
     private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : ViewModel()
+{
 
     /**
      * Stream of immutable states representative of the UI.
@@ -61,6 +52,7 @@ class SearchMovieViewModelViewModel(
     val accept: (UiAction) -> Unit
 
     init {
+        Log.d("github","")
         val initialQuery: String = savedStateHandle.get(LAST_SEARCH_QUERY) ?: DEFAULT_QUERY
         val lastQueryScrolled: String = savedStateHandle.get(LAST_QUERY_SCROLLED) ?: DEFAULT_QUERY
         val actionStateFlow = MutableSharedFlow<UiAction>()
@@ -83,6 +75,7 @@ class SearchMovieViewModelViewModel(
         pagingDataFlow = searches
             .flatMapLatest { searchRepo(queryString = it.query) }
             .cachedIn(viewModelScope)
+
 
         state = combine(
             searches,
@@ -113,7 +106,6 @@ class SearchMovieViewModelViewModel(
         super.onCleared()
     }
 
-
     private fun searchRepo(queryString: String): Flow<PagingData<UiModel>> =
         repository.getSearchResultStream(queryString)
             .map { pagingData -> pagingData.map { UiModel.RepoItem(it) } }
@@ -126,14 +118,14 @@ class SearchMovieViewModelViewModel(
 
                     if (before == null) {
                         // we're at the beginning of the list
-                        return@insertSeparators UiModel.SeparatorItem("${after.mvoteCount}0.000+ votes")
+                        return@insertSeparators UiModel.SeparatorItem("${after.mvoteCount}0.000+ stars")
                     }
                     // check between 2 items
                     if (before.mvoteCount > after.mvoteCount) {
                         if (after.mvoteCount >= 100) {
-                            UiModel.SeparatorItem("${after.mvoteCount}0.000+ votes")
+                            UiModel.SeparatorItem("${after.mvoteCount}0.000+ stars")
                         } else {
-                            UiModel.SeparatorItem("< 100.000+ votes")
+                            UiModel.SeparatorItem("< 10.000+ stars")
                         }
                     } else {
                         // no separator
@@ -154,13 +146,15 @@ data class UiState(
     val hasNotScrolledForCurrentSearch: Boolean = false
 )
 
+
 sealed class UiModel {
     data class RepoItem(val repo: Result) : UiModel()
     data class SeparatorItem(val description: String) : UiModel()
 }
 
 private val UiModel.RepoItem.mvoteCount: Int
-    get() = this.repo.voteCount/ 100
+    get() = this.repo.voteCount!!
+
 private const val LAST_QUERY_SCROLLED: String = "last_query_scrolled"
 private const val LAST_SEARCH_QUERY: String = "last_search_query"
 private const val DEFAULT_QUERY = "god"

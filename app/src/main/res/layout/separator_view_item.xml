@@ -22,17 +22,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#5C5959">
+    android:background="@color/separatorBackground">
 
     <TextView
         android:id="@+id/separator_description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:padding="@dimen/row_item_margin_horizontal"
-        android:textColor="#ECE8E8"
+        android:textColor="@color/separatorText"
         android:textSize="@dimen/repo_name_size"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="100+ votes" />
+        tools:text="10000+ stars" />
 </androidx.constraintlayout.widget.ConstraintLayout>

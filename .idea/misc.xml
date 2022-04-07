@@ -8,6 +8,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Projects/testpagingwtihmdb/app/src/main/res/drawable/ic_eye.xml" value="0.1245" />
         <entry key="..\:/Projects/testpagingwtihmdb/app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="..\:/Projects/testpagingwtihmdb/app/src/main/res/layout/movies_load_state_footer_view_item.xml" value="0.1" />
         <entry key="..\:/Projects/testpagingwtihmdb/app/src/main/res/layout/repo_view_item.xml" value="0.1" />

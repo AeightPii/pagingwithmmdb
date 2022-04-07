@@ -10,11 +10,10 @@ import retrofit2.http.Query
 const val IN_QUALIFIER = "in:name,description"
 
 interface MovieServices {
-    @GET("search/movie?")
+    @GET("search/movie?&api_key=59e90160f05dc382b043b086e34c75c5")
     suspend fun searchMovies(
         @Query("query") query: String,
         @Query("page") page: Int,
-        @Query("api_key") apiKey: String,
         @Query("per_page") itemsPerPage: Int
     ): MoviesSearchResponse
 

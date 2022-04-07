@@ -1,10 +1,10 @@
 package com.example.testpagingwtihmdb
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -14,28 +14,27 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import com.example.testpagingwtihmdb.databinding.ActivityMainBinding
 import com.example.testpagingwtihmdb.ui.*
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.map
+
 
 class MainActivity : AppCompatActivity() {
-
-    @OptIn(InternalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding = com.example.testpagingwtihmdb.databinding.ActivityMainBinding.inflate(layoutInflater)
+        val binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        val viewModel = ViewModelProvider(this, Injection.provideViewModelFactory(this))
+
+        // get the view model
+        val viewModel = ViewModelProvider(
+            this, Injection.provideViewModelFactory(
+                context = this,
+                owner = this
+            )
+        )
             .get(SearchMovieViewModelViewModel::class.java)
 
+        // add dividers between RecyclerView's row items
         val decoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
         binding.list.addItemDecoration(decoration)
 
@@ -47,23 +46,27 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    @InternalCoroutinesApi
+    /**
+     * Binds the [UiState] provided  by the [SearchRepositoriesViewModel] to the UI,
+     * and allows the UI to feed back user actions to it.
+     */
     private fun ActivityMainBinding.bindState(
         uiState: StateFlow<UiState>,
         pagingData: Flow<PagingData<UiModel>>,
         uiActions: (UiAction) -> Unit
     ) {
         val repoAdapter = ReposAdapter()
+        val header = MoviesLoadStateAdapter { repoAdapter.retry() }
         list.adapter = repoAdapter.withLoadStateHeaderAndFooter(
-            header = MoviesLoadStateAdapter { repoAdapter.retry() },
+            header = header,
             footer = MoviesLoadStateAdapter { repoAdapter.retry() }
         )
-
         bindSearch(
             uiState = uiState,
             onQueryChanged = uiActions
         )
         bindList(
+            header = header,
             repoAdapter = repoAdapter,
             uiState = uiState,
             pagingData = pagingData,
@@ -71,7 +74,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    @OptIn(InternalCoroutinesApi::class)
     private fun ActivityMainBinding.bindSearch(
         uiState: StateFlow<UiState>,
         onQueryChanged: (UiAction.Search) -> Unit
@@ -111,21 +113,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun ActivityMainBinding.bindList(
+        header: MoviesLoadStateAdapter,
         repoAdapter: ReposAdapter,
         uiState: StateFlow<UiState>,
         pagingData: Flow<PagingData<UiModel>>,
         onScrollChanged: (UiAction.Scroll) -> Unit
     ) {
+        retryButton.setOnClickListener { repoAdapter.retry() }
         list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 if (dy != 0) onScrollChanged(UiAction.Scroll(currentQuery = uiState.value.query))
             }
         })
         val notLoading = repoAdapter.loadStateFlow
-            // Only emit when REFRESH LoadState for RemoteMediator changes.
-            .distinctUntilChangedBy { it.source.refresh }
-            // Only react to cases where Remote REFRESH completes i.e., NotLoading.
-            .map { it.source.refresh is LoadState.NotLoading }
+            .asRemotePresentationState()
+            .map { it == RemotePresentationState.PRESENTED }
 
         val hasNotScrolledForCurrentSearch = uiState
             .map { it.hasNotScrolledForCurrentSearch }
@@ -147,18 +149,25 @@ class MainActivity : AppCompatActivity() {
                 if (shouldScroll) list.scrollToPosition(0)
             }
         }
+
         lifecycleScope.launch {
             repoAdapter.loadStateFlow.collect { loadState ->
+                // Show a retry header if there was an error refreshing, and items were previously
+                // cached OR default to the default prepend state
+                header.loadState = loadState.mediator
+                    ?.refresh
+                    ?.takeIf { it is LoadState.Error && repoAdapter.itemCount > 0 }
+                    ?: loadState.prepend
+
                 val isListEmpty = loadState.refresh is LoadState.NotLoading && repoAdapter.itemCount == 0
                 // show empty list
                 emptyList.isVisible = isListEmpty
-                // Only show the list if refresh succeeds.
-                list.isVisible = !isListEmpty
+                // Only show the list if refresh succeeds, either from the the local db or the remote.
+                list.isVisible =  loadState.source.refresh is LoadState.NotLoading || loadState.mediator?.refresh is LoadState.NotLoading
                 // Show loading spinner during initial load or refresh.
-                progressBar.isVisible = loadState.source.refresh is LoadState.Loading
+                progressBar.isVisible = loadState.mediator?.refresh is LoadState.Loading
                 // Show the retry state if initial load or refresh fails.
-                retryButton.isVisible = loadState.source.refresh is LoadState.Error
-
+                retryButton.isVisible = loadState.mediator?.refresh is LoadState.Error && repoAdapter.itemCount == 0
                 // Toast on any error, regardless of whether it came from RemoteMediator or PagingSource
                 val errorState = loadState.source.append as? LoadState.Error
                     ?: loadState.source.prepend as? LoadState.Error

@@ -31,7 +31,7 @@ class MoviePagingSource(
         val apiQuery = query
         val apiKey = "59e90160f05dc382b043b086e34c75c5"
         return try {
-            val response = service.searchMovies(apiQuery, position, apiKey, params.loadSize)
+            val response = service.searchMovies(apiQuery, position, params.loadSize)
             val repos = response.results
             val nextKey = if (repos.isEmpty()) {
                 null

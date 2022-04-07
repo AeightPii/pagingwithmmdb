@@ -16,11 +16,13 @@
 
 package com.example.testpagingwtihmdb
 
+import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import androidx.savedstate.SavedStateRegistryOwner
 
 import com.example.testpagingwtihmdb.api.MovieServices
 import com.example.testpagingwtihmdb.data.MovieRepository
+import com.example.testpagingwtihmdb.db.MovieDatabase
 import com.example.testpagingwtihmdb.ui.ViewModelFactory
 
 /**
@@ -34,15 +36,33 @@ object Injection {
      * Creates an instance of [GithubRepository] based on the [GithubService] and a
      * [GithubLocalCache]
      */
-    private fun provideMovieRepository(): MovieRepository {
-        return MovieRepository(MovieServices.create())
+//    private fun provideMovieRepository(context: Context): MovieRepository {
+//        return MovieRepository(MovieServices.create(), MovieDatabase.getInstance(context))
+//    }
+//
+//    /**
+//     * Provides the [ViewModelProvider.Factory] that is then used to get a reference to
+//     * [ViewModel] objects.
+//     */
+//    fun provideViewModelFactory(
+//        context: Context,
+//        owner: SavedStateRegistryOwner
+//    ): ViewModelProvider.Factory {
+//        return ViewModelFactory(owner, provideMovieRepository(context))
+//    }
+    /**
+     * Creates an instance of [GithubRepository] based on the [GithubService] and a
+     * [GithubLocalCache]
+     */
+    private fun provideMovieRepository(context: Context): MovieRepository {
+        return MovieRepository(MovieServices.create(), MovieDatabase.getInstance(context))
     }
 
     /**
      * Provides the [ViewModelProvider.Factory] that is then used to get a reference to
      * [ViewModel] objects.
      */
-    fun provideViewModelFactory(owner: SavedStateRegistryOwner): ViewModelProvider.Factory {
-        return ViewModelFactory(owner, provideMovieRepository())
+    fun provideViewModelFactory(context: Context, owner: SavedStateRegistryOwner): ViewModelProvider.Factory {
+        return ViewModelFactory(owner, provideMovieRepository(context))
     }
 }
